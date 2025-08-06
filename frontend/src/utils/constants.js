@@ -249,3 +249,39 @@ export const GAMIFICATION = {
     MASTER: { min: 10000, max: Infinity },
   },
 };
+export const STORAGE_KEYS = {
+  // Authentication & User Data
+  AUTH_TOKEN: 'authToken',
+  USER: 'exam_catalyst_user',
+  TOKEN: 'exam_catalyst_token', // Alternative token key
+  USER_PREFERENCES: 'userPreferences',
+  PREFERENCES: 'exam_catalyst_preferences', // Extended preferences
+  
+  // Exam & Session Data
+  EXAM_PROGRESS: 'examProgress',
+  CURRENT_EXAM: 'exam_catalyst_current_exam',
+  DRAFT_ANSWERS: 'exam_catalyst_draft_answers',
+  EXAM_SETTINGS: 'exam_catalyst_exam_settings',
+  
+  // UI & Display Settings
+  THEME: 'theme',
+  SIDEBAR_COLLAPSED: 'sidebarCollapsed',
+  
+  // Study Materials & Progress
+  BOOKMARKS: 'exam_catalyst_bookmarks',
+  NOTES: 'exam_catalyst_notes',
+  STUDY_PLANS: 'exam_catalyst_study_plans',
+  PERFORMANCE_DATA: 'exam_catalyst_performance_data',
+  
+  // Tools & Utilities
+  CALCULATOR_HISTORY: 'calculatorHistory',
+  
+  // Cache & Temporary Data
+  CACHE_PREFIX: 'cache_',
+  TEMP_PREFIX: 'temp_',
+  
+  // Analytics & Tracking
+  USER_ANALYTICS: 'exam_catalyst_analytics',
+  STUDY_STREAKS: 'exam_catalyst_streaks',
+  ACHIEVEMENTS: 'exam_catalyst_achievements',
+};
