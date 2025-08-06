@@ -249,6 +249,7 @@ export const GAMIFICATION = {
     MASTER: { min: 10000, max: Infinity },
   },
 };
+
 export const STORAGE_KEYS = {
   // Authentication & User Data
   AUTH_TOKEN: 'authToken',
