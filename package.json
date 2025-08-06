@@ -1,4 +1,34 @@
 {
+  "name": "exam-catalyst-2026-backend",
+  "description": "Backend API for Exam Catalyst 2026 - CBT UTME Application",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "build": "echo 'No build step required for Node.js backend'",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "vercel-build": "echo 'Backend ready for deployment'"
+  },
+  "keywords": [
+    "exam",
+    "catalyst",
+    "utme",
+    "cbt",
+    "education",
+    "nodejs",
+    "express",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "chart.js": "^4.5.0",
@@ -9,19 +39,6 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.5"
   },
-  "name": "workspace",
-  "description": "",
-  "version": "1.0.0",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "nodemon": "^3.1.10"
   }
