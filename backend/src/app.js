@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
+const path = require('path');
 require('dotenv').config();
 
 const logger = require('./utils/logger');
@@ -38,14 +39,27 @@ app.use(helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:"],
-      scriptSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      connectSrc: ["'self'"],
+      frameSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      manifestSrc: ["'self'"],
     },
   },
 }));
 
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  process.env.FRONTEND_URL,
+  process.env.RAILWAY_STATIC_URL,
+  process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null
+].filter(Boolean);
+
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL 
+    ? allowedOrigins
     : ['http://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -78,6 +92,7 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV,
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
   });
 });
 
@@ -87,10 +102,34 @@ app.use('/api/exams', examRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/results', resultRoutes);
 
+const frontendBuildPath = path.join(__dirname, '../../frontend/build');
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(frontendBuildPath));
+  
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    
+    const indexPath = path.join(frontendBuildPath, 'index.html');
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        logger.error('Error serving frontend file:', err);
+        res.status(500).json({
+          success: false,
+          message: 'Frontend not available',
+        });
+      }
+    });
+  });
+}
+
 app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
     message: 'Route not found',
+    path: req.originalUrl,
   });
 });
 
@@ -98,9 +137,17 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  logger.info(`Health check available at: http://localhost:${PORT}/health`);
+  
+  if (process.env.NODE_ENV === 'production') {
+    logger.info(`Frontend served from: ${frontendBuildPath}`);
+  }
 });
+
+server.keepAliveTimeout = 120 * 1000;
+server.headersTimeout = 120 * 1000;
 
 process.on('unhandledRejection', (err) => {
   logger.error('Unhandled Promise Rejection:', err);
@@ -116,6 +163,17 @@ process.on('uncaughtException', (err) => {
 
 process.on('SIGTERM', () => {
   logger.info('SIGTERM received. Shutting down gracefully...');
+  server.close(() => {
+    logger.info('Server closed');
+    mongoose.connection.close(false, () => {
+      logger.info('MongoDB connection closed');
+      process.exit(0);
+    });
+  });
+});
+
+process.on('SIGINT', () => {
+  logger.info('SIGINT received. Shutting down gracefully...');
   server.close(() => {
     logger.info('Server closed');
     mongoose.connection.close(false, () => {
