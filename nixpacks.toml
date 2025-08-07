@@ -3,7 +3,6 @@ NODE_ENV = "production"
 
 [phases.install]
 cmds = [
-  "npm ci",
   "cd backend && npm ci",
   "cd frontend && npm ci"
 ]
@@ -14,4 +13,4 @@ cmds = [
 ]
 
 [start]
-cmd = "npm start"
+cmd = "cd backend && npm start"
