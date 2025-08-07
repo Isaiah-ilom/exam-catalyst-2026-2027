@@ -1,13 +1,11 @@
-[build]
-providers = ["node"]
-
 [variables]
 NODE_ENV = "production"
 
 [phases.install]
 cmds = [
-  "cd backend && npm ci",      # Use install since no lock file
-  "cd frontend && npm ci"           # Use ci where lock file exists
+  "npm install",
+  "cd backend && npm install",
+  "cd frontend && npm install"
 ]
 
 [phases.build]
