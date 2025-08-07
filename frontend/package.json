@@ -2,9 +2,13 @@
   "name": "exam-catalyst-2026-frontend",
   "version": "1.0.0",
   "description": "CBT UTME Application Frontend",
-  "main": "index.js",
+  "main": "src/index.js",
   "homepage": ".",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
@@ -51,10 +55,6 @@
     ]
   },
   "proxy": "http://localhost:5000",
-  "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=8.0.0"
-  },
   "keywords": [
     "exam",
     "catalyst",
