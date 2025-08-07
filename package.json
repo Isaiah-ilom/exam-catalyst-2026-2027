@@ -1,24 +1,10 @@
 {
   "name": "exam-catalyst-2026",
   "version": "1.0.0",
-  "description": "CBT UTME Application - Full Stack",
   "engines": {
-    "node": "18.x",
-    "npm": "9.x"
+    "node": "18"
   },
   "scripts": {
-    "start": "cd backend && npm start",
-    "build": "cd frontend && npm run build",
-    "install:backend": "cd backend && npm install",
-    "install:frontend": "cd frontend && npm install",
-    "postinstall": "npm run install:backend && npm run install:frontend"
-  },
-  "keywords": [
-    "exam",
-    "catalyst",
-    "utme",
-    "cbt"
-  ],
-  "author": "Isaiah",
-  "license": "MIT"
+    "start": "cd backend && node src/app.js"
+  }
 }
