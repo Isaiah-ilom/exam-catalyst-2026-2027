@@ -1,28 +1,45 @@
 {
-  "dependencies": {
-    "bcryptjs": "^3.0.2",
-    "chart.js": "^4.5.0",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
-    "express": "^5.1.0",
-    "framer-motion": "^12.23.11",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.16.5"
-  },
-  "name": "workspace",
-  "description": "",
+  "name": "exam-catalyst-2026",
   "version": "1.0.0",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
+  "description": "CBT UTME Application - Full Stack",
+  "main": "backend/src/app.js",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npm run start:backend",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm start",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "build": "npm run build:frontend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "install:all": "npm install && npm run install:backend && npm run install:frontend",
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "heroku-postbuild": "npm run install:all && npm run build:frontend"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "devDependencies": {
-    "nodemon": "^3.1.10"
-  }
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "exam",
+    "catalyst",
+    "utme",
+    "cbt",
+    "education",
+    "fullstack",
+    "jamb",
+    "nigeria"
+  ],
+  "author": "Isaiah",
+  "license": "MIT"
 }
