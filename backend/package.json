@@ -3,42 +3,22 @@
   "description": "Backend API for Exam Catalyst 2026 - CBT UTME Application",
   "version": "1.0.0",
   "main": "src/app.js",
-  "directories": {
-    "doc": "docs"
-  },
   "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "node": "18.x",
+    "npm": "9.x"
   },
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "build": "echo 'Backend build complete'",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "echo 'Backend build complete'"
   },
-  "keywords": [
-    "exam",
-    "catalyst",
-    "utme",
-    "cbt",
-    "education",
-    "nodejs",
-    "express",
-    "mongodb",
-    "jamb",
-    "nigeria"
-  ],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.2",
-    "chart.js": "^4.5.0",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
-    "express": "^5.1.0",
-    "framer-motion": "^12.23.11",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.16.5"
+    "mongoose": "^7.0.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
