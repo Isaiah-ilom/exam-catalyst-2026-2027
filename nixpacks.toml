@@ -3,8 +3,8 @@ NODE_ENV = "production"
 
 [phases.install]
 cmds = [
-  "cd backend && npm ci",
-  "cd frontend && npm ci"
+  "cd backend && npm install",      # Use npm install here because there's no lock file
+  "cd frontend && npm ci"           # Keep npm ci for frontend since it has a lock file
 ]
 
 [phases.build]
