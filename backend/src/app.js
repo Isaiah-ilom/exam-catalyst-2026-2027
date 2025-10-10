@@ -51,16 +51,19 @@ app.use(helmet({
 
 const allowedOrigins = [
   'http://localhost:3000',
+  'http://localhost:5000',
   'http://127.0.0.1:3000',
+  'http://127.0.0.1:5000',
   process.env.FRONTEND_URL,
   process.env.RAILWAY_STATIC_URL,
-  process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null
+  process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : null,
+  process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : null
 ].filter(Boolean);
 
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? allowedOrigins
-    : ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    : true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -135,9 +138,9 @@ app.use('*', (req, res) => {
 
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3001;
 
-const server = app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, 'localhost', () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   logger.info(`Health check available at: http://localhost:${PORT}/health`);
   
