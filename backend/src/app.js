@@ -26,7 +26,7 @@ const connectDB = async () => {
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
     logger.error('Database connection failed:', error);
-    process.exit(1);
+    logger.warn('Server will continue without database connection. Please check MONGODB_URI in .env file.');
   }
 };
 

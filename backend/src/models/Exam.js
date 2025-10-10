@@ -346,7 +346,7 @@ examSchema.methods.reorderQuestions = function(newOrder) {
 };
 
 // Method to update statistics
-examSchema.methods.updateStatistics = function(resultData) {
+examSchema.methods.updateStatistics = async function(resultData) {
   this.statistics.totalAttempts += 1;
   
   if (resultData.isCompleted) {
