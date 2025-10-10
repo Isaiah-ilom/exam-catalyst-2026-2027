@@ -15,35 +15,19 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Frontend"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Backend API"
+args = "Server"
 
 [[workflows.workflow]]
-name = "Frontend"
+name = "Server"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd frontend && npm start"
+args = "cd backend && NODE_ENV=production npm start"
 waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
-
-[[workflows.workflow]]
-name = "Backend API"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd backend && npm start"
-waitForPort = 3001
-
-[workflows.workflow.metadata]
-outputType = "console"
 
 [[ports]]
 localPort = 3001
@@ -53,11 +37,7 @@ externalPort = 3001
 localPort = 5000
 externalPort = 80
 
-[[ports]]
-localPort = 45663
-externalPort = 3000
-
 [deployment]
 deploymentTarget = "autoscale"
-run = ["bash", "-c", "cd backend && npm start"]
-build = ["bash", "-c", "cd frontend && npm run build"]
+run = ["bash", "-c", "cd backend && npm install --production && node src/app.js"]
+build = ["bash", "-c", "cd frontend && npm install && npm run build"]

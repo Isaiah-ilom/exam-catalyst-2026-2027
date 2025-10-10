@@ -1,0 +1,20 @@
+services:
+  - name: exam-catalyst-2026
+    type: web
+    instance_type: free
+    regions:
+      - fra
+    env:
+      - NODE_ENV=production
+    build:
+      type: buildpack
+      buildCommand: cd frontend && npm install && npm run build && cd ../backend && npm install
+    run:
+      command: cd backend && npm start
+    ports:
+      - port: 8000
+        protocol: http
+    health_check:
+      http:
+        port: 8000
+        path: /health

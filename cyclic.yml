@@ -1,0 +1,12 @@
+name: exam-catalyst-2026
+build:
+  command: cd frontend && npm install && npm run build && cd ../backend && npm install --production
+start:
+  command: cd backend && node src/app.js
+env:
+  - NODE_ENV=production
+  - PORT=3000
+health_check:
+  path: /health
+  interval: 30
+  timeout: 10

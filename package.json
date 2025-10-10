@@ -5,6 +5,12 @@
     "node": "18"
   },
   "scripts": {
-    "start": "cd backend && node src/app.js"
+    "start": "cd backend && node src/app.js",
+    "build": "cd frontend && npm install && npm run build",
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start",
+    "deploy": "./build.sh && cd backend && npm start",
+    "heroku-postbuild": "cd frontend && npm install && npm run build"
   }
 }
