@@ -142,7 +142,7 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 
-const server = app.listen(PORT, 'localhost', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   logger.info(`Health check available at: http://localhost:${PORT}/health`);
   

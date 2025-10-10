@@ -7,8 +7,10 @@ frontend/node_modules/
 backend/dist/
 frontend/build/
 
-# Environment variables
+# Environment variables (NEVER commit these!)
 .env
+backend/.env
+frontend/.env
 .env.local
 .env.development.local
 .env.test.local
