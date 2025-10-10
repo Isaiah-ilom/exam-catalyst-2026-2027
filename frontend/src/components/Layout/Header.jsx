@@ -10,7 +10,7 @@ import {
   Settings, 
   LogOut,
   ChevronDown,
-  Calculator,
+  Calculator as CalculatorIcon,
   HelpCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';

@@ -5,7 +5,7 @@ import {
   Flag, 
   ArrowLeft, 
   ArrowRight, 
-  Calculator, 
+  Calculator as CalculatorIcon, 
   BookOpen,
   AlertTriangle,
   CheckCircle,

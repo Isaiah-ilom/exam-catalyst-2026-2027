@@ -162,15 +162,6 @@ export const BREAKPOINTS = {
   '2XL': 1536,
 };
 
-export const STORAGE_KEYS = {
-  AUTH_TOKEN: 'authToken',
-  USER_PREFERENCES: 'userPreferences',
-  EXAM_PROGRESS: 'examProgress',
-  THEME: 'theme',
-  SIDEBAR_COLLAPSED: 'sidebarCollapsed',
-  CALCULATOR_HISTORY: 'calculatorHistory',
-};
-
 export const API_ENDPOINTS = {
   AUTH: '/auth',
   USERS: '/users',

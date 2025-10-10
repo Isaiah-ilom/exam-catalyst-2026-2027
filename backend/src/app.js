@@ -17,6 +17,8 @@ const resultRoutes = require('./routes/results');
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
