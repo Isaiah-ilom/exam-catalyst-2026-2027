@@ -2,12 +2,12 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const mongoose = require('mongoose');
 const path = require('path');
 require('dotenv').config();
 
 const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
+const { db } = require('./utils/sqlite');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -19,20 +19,7 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    logger.info(`MongoDB Connected: ${conn.connection.host}`);
-  } catch (error) {
-    logger.error('Database connection failed:', error);
-    logger.warn('Server will continue without database connection. Please check MONGODB_URI in .env file.');
-  }
-};
-
-connectDB();
+logger.info('SQLite database initialized successfully');
 
 app.use(helmet({
   contentSecurityPolicy: {
@@ -97,7 +84,7 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV,
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    database: 'sqlite',
   });
 });
 
@@ -170,10 +157,9 @@ process.on('SIGTERM', () => {
   logger.info('SIGTERM received. Shutting down gracefully...');
   server.close(() => {
     logger.info('Server closed');
-    mongoose.connection.close(false, () => {
-      logger.info('MongoDB connection closed');
-      process.exit(0);
-    });
+    db.close();
+    logger.info('Database connection closed');
+    process.exit(0);
   });
 });
 
@@ -181,10 +167,9 @@ process.on('SIGINT', () => {
   logger.info('SIGINT received. Shutting down gracefully...');
   server.close(() => {
     logger.info('Server closed');
-    mongoose.connection.close(false, () => {
-      logger.info('MongoDB connection closed');
-      process.exit(0);
-    });
+    db.close();
+    logger.info('Database connection closed');
+    process.exit(0);
   });
 });
 

@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const { userQueries } = require('../utils/sqlite');
 
 exports.authenticate = async (req, res, next) => {
   try {
@@ -18,15 +18,16 @@ exports.authenticate = async (req, res, next) => {
     
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id).select('-password');
+      const user = userQueries.findById.get(decoded.userId);
       
-      if (!req.user) {
+      if (!user) {
         return res.status(401).json({ 
           success: false, 
           message: 'User not found' 
         });
       }
       
+      req.user = { userId: user.id, role: user.role };
       next();
     } catch (err) {
       return res.status(401).json({ 

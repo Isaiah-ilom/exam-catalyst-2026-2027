@@ -1,562 +1,227 @@
-const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const { validationResult } = require('express-validator');
-const emailService = require('../services/emailService');
-const logger = require('../utils/logger');
+const { userQueries } = require('../utils/sqlite');
 
-const generateTokenResponse = (user) => {
-  const token = user.generateAuthToken();
-  
-  return {
-    token,
-    user: {
-      id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      avatar: user.avatar,
-      role: user.role,
-      isEmailVerified: user.isEmailVerified,
-      stats: user.stats,
-      preferences: user.preferences
-    }
-  };
+const generateToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  });
 };
 
 const register = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
+    const { name, email, password } = req.body;
 
-    const { firstName, lastName, email, password, phone, dateOfBirth } = req.body;
-
-    const existingUser = await User.findByEmail(email);
+    const existingUser = userQueries.findByEmail.get(email);
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'User already exists with this email'
+        message: 'Email already registered',
       });
     }
 
-    const user = new User({
-      firstName,
-      lastName,
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = userQueries.create.run(
+      name,
       email,
-      password,
-      phone,
-      dateOfBirth
-    });
+      hashedPassword,
+      'student',
+      null
+    );
 
-    const emailVerificationToken = user.generateEmailVerificationToken();
-    await user.save();
+    const user = userQueries.findById.get(result.lastInsertRowid);
 
-    try {
-      await emailService.sendVerificationEmail(user.email, emailVerificationToken, user.firstName);
-    } catch (emailError) {
-      logger.error('Failed to send verification email:', emailError);
-    }
+    const token = generateToken(user.id);
 
-    const tokenResponse = generateTokenResponse(user);
-
-    logger.info(`New user registered: ${user.email}`);
+    const userResponse = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+    };
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful. Please check your email to verify your account.',
-      ...tokenResponse
+      message: 'Registration successful',
+      token,
+      user: userResponse,
     });
-
   } catch (error) {
-    logger.error('Registration error:', error);
+    console.error('Registration error:', error);
     res.status(500).json({
       success: false,
       message: 'Registration failed',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: error.message,
     });
   }
 };
 
 const login = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
+    const { email, password } = req.body;
 
-    const { email, password, rememberMe } = req.body;
+    const user = userQueries.findByEmail.get(email);
 
-    const user = await User.findByEmail(email).select('+password');
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: 'Invalid email or password',
       });
     }
 
-    if (user.isLocked) {
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const remainingTime = Math.ceil((user.lockUntil - Date.now()) / 60000);
       return res.status(423).json({
         success: false,
-        message: 'Account is temporarily locked due to too many failed login attempts'
+        message: `Account locked. Try again in ${remainingTime} minutes`,
       });
     }
 
-    if (!user.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: 'Account has been deactivated'
-      });
-    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-    const isPasswordValid = await user.comparePassword(password);
-    
     if (!isPasswordValid) {
-      await user.incrementLoginAttempts();
+      const loginAttempts = (user.loginAttempts || 0) + 1;
+      const lockUntil = loginAttempts >= 5 ? Date.now() + 15 * 60 * 1000 : null;
+
+      userQueries.updateLoginAttempts.run(loginAttempts, lockUntil, user.id);
+
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: 'Invalid email or password',
+        attemptsRemaining: Math.max(0, 5 - loginAttempts),
       });
     }
 
-    await user.resetLoginAttempts();
+    userQueries.resetLoginAttempts.run(user.id);
 
-    const tokenResponse = generateTokenResponse(user);
+    const token = generateToken(user.id);
 
-    if (rememberMe) {
-      res.cookie('refreshToken', tokenResponse.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-      });
-    }
-
-    logger.info(`User logged in: ${user.email}`);
+    const userResponse = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+    };
 
     res.json({
       success: true,
       message: 'Login successful',
-      ...tokenResponse
+      token,
+      user: userResponse,
     });
-
   } catch (error) {
-    logger.error('Login error:', error);
+    console.error('Login error:', error);
     res.status(500).json({
       success: false,
       message: 'Login failed',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: error.message,
     });
   }
 };
 
 const logout = async (req, res) => {
-  try {
-    res.clearCookie('refreshToken');
-    
-    logger.info(`User logged out: ${req.user?.email}`);
-    
-    res.json({
-      success: true,
-      message: 'Logout successful'
-    });
-  } catch (error) {
-    logger.error('Logout error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Logout failed'
-    });
-  }
+  res.json({
+    success: true,
+    message: 'Logged out successfully',
+  });
 };
 
 const getCurrentUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id)
-      .populate('achievements')
-      .select('-password -passwordResetToken -passwordResetExpires -emailVerificationToken -emailVerificationExpires');
+    const user = userQueries.findById.get(req.user.userId);
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'User not found',
       });
     }
+
+    const userResponse = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+      isEmailVerified: Boolean(user.isEmailVerified),
+    };
 
     res.json({
       success: true,
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-        dateOfBirth: user.dateOfBirth,
-        age: user.age,
-        avatar: user.avatar,
-        bio: user.bio,
-        school: user.school,
-        location: user.location,
-        role: user.role,
-        isEmailVerified: user.isEmailVerified,
-        stats: user.stats,
-        preferences: user.preferences,
-        achievements: user.achievements,
-        badges: user.badges,
-        goals: user.goals,
-        socialLinks: user.socialLinks,
-        createdAt: user.createdAt
-      }
+      user: userResponse,
     });
   } catch (error) {
-    logger.error('Get current user error:', error);
+    console.error('Get current user error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get user data'
-    });
-  }
-};
-
-const forgotPassword = async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
-
-    const { email } = req.body;
-
-    const user = await User.findByEmail(email);
-    if (!user) {
-      return res.json({
-        success: true,
-        message: 'If an account exists with this email, a password reset link has been sent.'
-      });
-    }
-
-    const resetToken = user.generatePasswordResetToken();
-    await user.save();
-
-    try {
-      await emailService.sendPasswordResetEmail(user.email, resetToken, user.firstName);
-      
-      logger.info(`Password reset requested for: ${user.email}`);
-      
-      res.json({
-        success: true,
-        message: 'Password reset link has been sent to your email'
-      });
-    } catch (emailError) {
-      user.passwordResetToken = undefined;
-      user.passwordResetExpires = undefined;
-      await user.save();
-      
-      logger.error('Failed to send password reset email:', emailError);
-      
-      res.status(500).json({
-        success: false,
-        message: 'Failed to send password reset email'
-      });
-    }
-  } catch (error) {
-    logger.error('Forgot password error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Password reset request failed'
-    });
-  }
-};
-
-const resetPassword = async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
-
-    const { token, newPassword } = req.body;
-
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-
-    const user = await User.findOne({
-      passwordResetToken: hashedToken,
-      passwordResetExpires: { $gt: Date.now() }
-    });
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired password reset token'
-      });
-    }
-
-    user.password = newPassword;
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    user.loginAttempts = 0;
-    user.lockUntil = undefined;
-
-    await user.save();
-
-    logger.info(`Password reset successful for: ${user.email}`);
-
-    res.json({
-      success: true,
-      message: 'Password has been reset successfully'
-    });
-
-  } catch (error) {
-    logger.error('Reset password error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Password reset failed'
-    });
-  }
-};
-
-const verifyEmail = async (req, res) => {
-  try {
-    const { token } = req.body;
-
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
-
-    const user = await User.findOne({
-      emailVerificationToken: hashedToken,
-      emailVerificationExpires: { $gt: Date.now() }
-    });
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired verification token'
-      });
-    }
-
-    user.isEmailVerified = true;
-    user.emailVerificationToken = undefined;
-    user.emailVerificationExpires = undefined;
-
-    await user.save();
-
-    logger.info(`Email verified for: ${user.email}`);
-
-    res.json({
-      success: true,
-      message: 'Email has been verified successfully'
-    });
-
-  } catch (error) {
-    logger.error('Email verification error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Email verification failed'
-    });
-  }
-};
-
-const resendVerification = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    if (user.isEmailVerified) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is already verified'
-      });
-    }
-
-    const emailVerificationToken = user.generateEmailVerificationToken();
-    await user.save();
-
-    try {
-      await emailService.sendVerificationEmail(user.email, emailVerificationToken, user.firstName);
-      
-      res.json({
-        success: true,
-        message: 'Verification email has been sent'
-      });
-    } catch (emailError) {
-      logger.error('Failed to resend verification email:', emailError);
-      
-      res.status(500).json({
-        success: false,
-        message: 'Failed to send verification email'
-      });
-    }
-  } catch (error) {
-    logger.error('Resend verification error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to resend verification email'
+      message: 'Failed to fetch user',
+      error: error.message,
     });
   }
 };
 
 const updateProfile = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
+    const { name, avatar } = req.body;
 
-    const { firstName, lastName, phone, bio, school, location, socialLinks } = req.body;
+    userQueries.update.run(name, avatar, req.user.userId);
 
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
+    const user = userQueries.findById.get(req.user.userId);
 
-    user.firstName = firstName || user.firstName;
-    user.lastName = lastName || user.lastName;
-    user.phone = phone || user.phone;
-    user.bio = bio || user.bio;
-    user.school = school || user.school;
-    user.location = location || user.location;
-    user.socialLinks = { ...user.socialLinks, ...socialLinks };
-
-    await user.save();
-
-    logger.info(`Profile updated for: ${user.email}`);
+    const userResponse = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+    };
 
     res.json({
       success: true,
       message: 'Profile updated successfully',
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-        bio: user.bio,
-        school: user.school,
-        location: user.location,
-        avatar: user.avatar,
-        socialLinks: user.socialLinks
-      }
+      user: userResponse,
     });
-
   } catch (error) {
-    logger.error('Update profile error:', error);
+    console.error('Update profile error:', error);
     res.status(500).json({
       success: false,
-      message: 'Profile update failed'
+      message: 'Failed to update profile',
+      error: error.message,
     });
   }
 };
 
 const changePassword = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
-
     const { currentPassword, newPassword } = req.body;
 
-    const user = await User.findById(req.user.id).select('+password');
-    if (!user) {
-      return res.status(404).json({
+    const user = userQueries.findById.get(req.user.userId);
+
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
         success: false,
-        message: 'User not found'
+        message: 'Current password is incorrect',
       });
     }
 
-    const isCurrentPasswordValid = await user.comparePassword(currentPassword);
-    if (!isCurrentPasswordValid) {
-      return res.status(400).json({
-        success: false,
-        message: 'Current password is incorrect'
-      });
-    }
-
-    user.password = newPassword;
-    await user.save();
-
-    logger.info(`Password changed for: ${user.email}`);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    userQueries.updatePassword.run(hashedPassword, user.id);
 
     res.json({
       success: true,
-      message: 'Password changed successfully'
+      message: 'Password changed successfully',
     });
-
   } catch (error) {
-    logger.error('Change password error:', error);
+    console.error('Change password error:', error);
     res.status(500).json({
       success: false,
-      message: 'Password change failed'
-    });
-  }
-};
-
-const uploadAvatar = async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: 'No file uploaded'
-      });
-    }
-
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    user.avatar = req.file.secure_url || req.file.path;
-    await user.save();
-
-    logger.info(`Avatar uploaded for: ${user.email}`);
-
-    res.json({
-      success: true,
-      message: 'Avatar uploaded successfully',
-      avatar: user.avatar
-    });
-
-  } catch (error) {
-    logger.error('Avatar upload error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Avatar upload failed'
+      message: 'Failed to change password',
+      error: error.message,
     });
   }
 };
@@ -566,11 +231,6 @@ module.exports = {
   login,
   logout,
   getCurrentUser,
-  forgotPassword,
-  resetPassword,
-  verifyEmail,
-  resendVerification,
   updateProfile,
   changePassword,
-  uploadAvatar
 };
