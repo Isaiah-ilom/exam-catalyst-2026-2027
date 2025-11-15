@@ -10,30 +10,7 @@ root.render(
   <React.StrictMode>
     <BrowserRouter>
       <App />
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-          success: {
-            duration: 3000,
-            theme: {
-              primary: '#22c55e',
-              secondary: '#black',
-            },
-          },
-          error: {
-            duration: 5000,
-            theme: {
-              primary: '#ef4444',
-              secondary: '#black',
-            },
-          },
-        }}
-      />
+      <Toaster position="top-right" />
     </BrowserRouter>
   </React.StrictMode>
 );

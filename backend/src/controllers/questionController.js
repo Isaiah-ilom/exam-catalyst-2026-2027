@@ -1,45 +1,82 @@
-const Question = require('../models/Question');
+const { fetchQuestionsFromALOC } = require('../services/alocService');
 
-exports.getQuestions = async (req, res, next) => {
+exports.getQuestions = async (req, res) => {
   try {
-    const { subject, topic, limit = 50 } = req.query;
-    const filter = {};
-    if (subject) filter.subject = subject;
-    if (topic) filter.topic = topic;
+    const { subject, limit = 20 } = req.query;
     
-    const questions = await Question.find(filter).limit(parseInt(limit));
-    res.json({ success: true, data: questions, count: questions.length });
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.getQuestionById = async (req, res, next) => {
-  try {
-    const question = await Question.findById(req.params.id);
-    if (!question) {
-      return res.status(404).json({ success: false, message: 'Question not found' });
+    if (!subject) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Subject is required' 
+      });
     }
-    res.json({ success: true, data: question });
+
+    const questions = await fetchQuestionsFromALOC(subject, parseInt(limit));
+    
+    res.json({ 
+      success: true, 
+      data: questions, 
+      count: questions.length 
+    });
   } catch (error) {
-    next(error);
+    console.error('Error in getQuestions:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch questions' 
+    });
   }
 };
 
-exports.getQuestionsBySubject = async (req, res, next) => {
+exports.getQuestionsBySubject = async (req, res) => {
   try {
-    const questions = await Question.find({ subject: req.params.subject });
-    res.json({ success: true, data: questions, count: questions.length });
+    const { subject } = req.params;
+    const { limit = 20 } = req.query;
+    
+    const questions = await fetchQuestionsFromALOC(subject, parseInt(limit));
+    
+    res.json({ 
+      success: true, 
+      data: questions, 
+      count: questions.length 
+    });
   } catch (error) {
-    next(error);
+    console.error('Error in getQuestionsBySubject:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch questions' 
+    });
   }
 };
 
-exports.getQuestionsByTopic = async (req, res, next) => {
+exports.getSubjects = async (req, res) => {
   try {
-    const questions = await Question.find({ topic: req.params.topic });
-    res.json({ success: true, data: questions, count: questions.length });
+    const subjects = [
+      { name: 'Mathematics', code: 'mathematics', category: 'Science' },
+      { name: 'English', code: 'english', category: 'Arts' },
+      { name: 'Physics', code: 'physics', category: 'Science' },
+      { name: 'Chemistry', code: 'chemistry', category: 'Science' },
+      { name: 'Biology', code: 'biology', category: 'Science' },
+      { name: 'Economics', code: 'economics', category: 'Social Science' },
+      { name: 'Commerce', code: 'commerce', category: 'Social Science' },
+      { name: 'Accounting', code: 'accounting', category: 'Social Science' },
+      { name: 'Government', code: 'government', category: 'Social Science' },
+      { name: 'CRK', code: 'crk', category: 'Arts' },
+      { name: 'Geography', code: 'geography', category: 'Social Science' },
+      { name: 'Literature', code: 'literature', category: 'Arts' },
+      { name: 'History', code: 'history', category: 'Arts' },
+      { name: 'Civics', code: 'civics', category: 'Social Science' },
+      { name: 'Insurance', code: 'insurance', category: 'Social Science' }
+    ];
+    
+    res.json({ 
+      success: true, 
+      data: subjects 
+    });
   } catch (error) {
-    next(error);
+    console.error('Error in getSubjects:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch subjects' 
+    });
   }
 };

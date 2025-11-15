@@ -1,121 +1,82 @@
-# Quick Start Guide - Exam Catalyst 2026
+# Quick Start Guide
 
-## Local Development
+## Installation
 
-### 1. Install Dependencies
+1. Install all dependencies:
 ```bash
 npm run install-all
 ```
 
-### 2. Configure Environment
+## Running the Application
 
-#### Backend (.env in backend folder):
-```env
-MONGODB_URI=mongodb://localhost:27017/exam_catalyst_2026
-JWT_SECRET=your_secure_jwt_secret_here
-NODE_ENV=development
-PORT=5000
+### Option 1: Run Both Servers Separately
+
+Terminal 1 - Backend:
+```bash
+cd backend
+npm start
 ```
 
-#### Frontend (.env in frontend folder):
-```env
-PORT=3000
-REACT_APP_API_URL=/api
+Terminal 2 - Frontend:
+```bash
+cd frontend
+npm start
 ```
 
-### 3. Start Development
+### Option 2: Use npm scripts from root
 
-#### Option A: Run Both Servers Separately
+Terminal 1:
 ```bash
 npm run dev:backend
+```
+
+Terminal 2:
+```bash
 npm run dev:frontend
 ```
 
-#### Option B: Production Mode (Recommended for Replit)
-```bash
-npm run build
-npm start
-```
+## Access the Application
 
-## Deployment
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5000
 
-### Quick Deploy
-```bash
-./build.sh
-npm start
-```
+## First Time Setup
 
-### Platform-Specific
-
-#### Heroku
-```bash
-git push heroku main
-```
-
-#### Render
-- Push to GitHub
-- Connect repository on Render
-- Auto-deploys from `render.yaml`
-
-#### Railway
-- Push to GitHub
-- Connect repository on Railway
-- Auto-deploys from `railway.json`
-
-#### Vercel/Netlify (Frontend Only)
-```bash
-cd frontend && npm run build
-```
-
-See `DEPLOYMENT.md` for detailed platform instructions.
+1. Open http://localhost:3000
+2. Click "Sign Up" to create an account
+3. Fill in your details and register
+4. Login with your credentials
+5. Start practicing!
 
 ## Features
 
-- UTME CBT Practice Platform
-- 4 Core Subjects (Math, English, Physics, Chemistry)
-- Real-time Progress Tracking
-- Advanced Analytics Dashboard
-- Dark/Light Theme Support
-- Mobile Responsive Design
-- Exam Simulation Mode
-- Built-in Calculator
+- **Dashboard**: Overview of your progress
+- **Practice**: Choose subject and question count
+- **Exam**: Take timed mock exams
+- **Results**: View your performance
+- **Profile**: Manage your account
 
-## Tech Stack
+## Troubleshooting
 
-- **Frontend**: React 18, Tailwind CSS, Chart.js
-- **Backend**: Node.js, Express, MongoDB
-- **Authentication**: JWT
-- **Deployment**: Multi-platform support
+### Port Already in Use
 
-## Common Commands
+If port 3000 or 5000 is already in use:
 
-```bash
-npm run build           # Build frontend
-npm start              # Start production server
-npm run dev:backend    # Start backend in dev mode
-npm run dev:frontend   # Start frontend in dev mode
-npm run install-all    # Install all dependencies
-```
+Backend: Change PORT in `backend/.env`
+Frontend: It will prompt you to use a different port
 
-## Environment Variables
-
-### Required:
-- `MONGODB_URI` - MongoDB connection string
-- `JWT_SECRET` - Secret for JWT tokens
-
-### Optional:
-- `ALOC_API_KEY` - Question database API key
-- `EMAIL_SERVICE_KEY` - Email service credentials
-
-## Health Check
+### Dependencies Issues
 
 ```bash
-curl http://localhost:5000/health
+cd backend
+rm -rf node_modules package-lock.json
+npm install
+
+cd ../frontend
+rm -rf node_modules package-lock.json
+npm install
 ```
 
-## Support
+## Default Test Questions
 
-For issues or questions, check:
-- `README.md` - Full documentation
-- `DEPLOYMENT.md` - Deployment guides
-- `docs/` - API and feature documentation
+The app includes sample questions for testing. In production, these would be replaced with real UTME questions from a database or API.
