@@ -71,6 +71,8 @@ Welcome to the CBT Practice Platform documentation! Here's a guide to all availa
 
 ## Additional Files
 
+- **ALOC_API_SETUP.md** - Complete ALOC API integration guide
+- **IMPLEMENTATION_SUMMARY.md** - Technical implementation details
 - **backend/.env.example** - Backend environment variables template
 - **frontend/.env.example** - Frontend environment variables template
 - **package.json** - Root package configuration
