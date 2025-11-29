@@ -14,8 +14,7 @@ const Dashboard = () => {
 
   const fetchSubjectCount = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-      const response = await axios.get(`${apiUrl}/questions/subjects`);
+      const response = await axios.get('/api/questions/subjects');
       if (response.data.success) {
         setSubjectCount(response.data.data.length);
       }
@@ -31,28 +30,28 @@ const Dashboard = () => {
       description: 'Practice with subject questions',
       icon: Play,
       color: 'bg-green-500',
-      href: '/app/practice',
+      href: '/practice',
     },
     {
       title: 'Take Mock Exam',
       description: 'Full UTME simulation',
       icon: FileText,
       color: 'bg-blue-500',
-      href: '/app/exam',
+      href: '/exam',
     },
     {
       title: 'View Results',
       description: 'Check your performance',
       icon: BarChart3,
       color: 'bg-purple-500',
-      href: '/app/results',
+      href: '/results',
     },
     {
       title: 'Study Materials',
       description: 'Access notes and lessons',
       icon: BookOpen,
       color: 'bg-orange-500',
-      href: '/app/study',
+      href: '/study',
     },
   ];
 
