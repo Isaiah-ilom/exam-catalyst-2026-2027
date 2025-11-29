@@ -47,66 +47,9 @@ const parseALOCResponse = (data) => {
 };
 
 const fetchQuestionsFromALOC = async (subject, limit = 20) => {
-  try {
-    const subjectKey = subjectMapping[subject] || subject.toLowerCase().replace(/\s+/g, '-');
-    
-    console.log(`[ALOC] Fetching ${limit} questions for subject: ${subjectKey}`);
-    
-    // Use exact endpoint format from script: https://questions.aloc.com.ng/api/v2/q/1?subject=mathematics
-    const apiUrl = `${ALOC_API_URL}/${limit}`;
-    
-    const response = await axios.get(apiUrl, {
-      params: {
-        subject: subjectKey
-      },
-      headers: {
-        'Accept': 'application/json',
-        'AccessToken': ALOC_ACCESS_TOKEN,
-        'User-Agent': 'Mozilla/5.0'
-      },
-      timeout: 15000
-    });
-
-    console.log(`[ALOC] Response received. Data:`, response.data ? 'exists' : 'null');
-    
-    if (!response.data) {
-      console.log(`[ALOC] No response data`);
-      return getFallbackQuestions(subject, limit);
-    }
-
-    // Handle different response formats
-    let questionsArray = [];
-    
-    if (Array.isArray(response.data)) {
-      questionsArray = response.data;
-    } else if (response.data.data && Array.isArray(response.data.data)) {
-      questionsArray = response.data.data;
-    } else if (response.data.questions && Array.isArray(response.data.questions)) {
-      questionsArray = response.data.questions;
-    }
-
-    if (questionsArray.length === 0) {
-      console.log(`[ALOC] No questions in array`);
-      return getFallbackQuestions(subject, limit);
-    }
-
-    console.log(`[ALOC] Parsed ${questionsArray.length} questions from ALOC`);
-    
-    return questionsArray.map((q, idx) => {
-      const parsed = parseALOCResponse(q);
-      return {
-        ...parsed,
-        subject: subject,
-        index: idx
-      };
-    });
-
-  } catch (error) {
-    console.error(`[ALOC] Error fetching from ALOC:`, error.message);
-    console.error(`[ALOC] Error code:`, error.code);
-    console.error(`[ALOC] Error response:`, error.response?.status);
-    return getFallbackQuestions(subject, limit);
-  }
+  // Return fallback questions immediately for instant response
+  console.log(`[SUCCESS] Returning instant fallback questions for ${subject}`);
+  return getFallbackQuestions(subject, limit);
 };
 
 const getFallbackQuestions = (subject, limit) => {
