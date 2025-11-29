@@ -1,101 +1,123 @@
 const axios = require('axios');
 
-const ALOC_API_URL = process.env.ALOC_API_URL || 'https://questions.aloc.com.ng/api/v2';
-const ALOC_ACCESS_TOKEN = process.env.ALOC_ACCESS_TOKEN;
+const ALOC_API_URL = 'https://questions.aloc.com.ng/api/v2';
+const ALOC_ACCESS_TOKEN = 'QB-1e5c5f1553ccd8cd9e11';
 
 const subjectMapping = {
   'Mathematics': 'mathematics',
-  'English Language': 'english',
+  'English': 'english',
   'Physics': 'physics',
   'Chemistry': 'chemistry',
   'Biology': 'biology',
   'Economics': 'economics',
   'Commerce': 'commerce',
-  'Financial Accounting': 'accounting',
+  'Accounting': 'accounting',
   'Government': 'government',
-  'Christian Religious Studies': 'crk',
-  'Islamic Religious Studies': 'irk',
+  'CRK': 'crk',
+  'IRK': 'irk',
   'Geography': 'geography',
-  'Literature in English': 'literature',
+  'Literature': 'literature',
   'History': 'history',
-  'Civic Education': 'civics',
+  'Civics': 'civics',
   'French': 'french',
-  'Hausa': 'hausa',
-  'Igbo': 'igbo',
-  'Yoruba': 'yoruba'
-};
-
-const fallbackQuestions = {
-  'Mathematics': [
-    { id: 'm1', subject: 'Mathematics', question: 'Simplify: 3(2x - 5) - 2(3x + 4)', options: ['-23', '-7', '23', '7'], correctAnswer: 'A', explanation: '3(2x - 5) - 2(3x + 4) = 6x - 15 - 6x - 8 = -23', difficulty: 'medium' },
-    { id: 'm2', subject: 'Mathematics', question: 'If y = 3x² - 2x + 1, find dy/dx', options: ['6x - 2', '3x - 2', '6x + 2', '3x + 2'], correctAnswer: 'A', explanation: 'dy/dx = 6x - 2', difficulty: 'hard' },
-    { id: 'm3', subject: 'Mathematics', question: 'What is 15% of 80?', options: ['10', '12', '14', '16'], correctAnswer: 'B', explanation: '15% of 80 = 0.15 × 80 = 12', difficulty: 'easy' }
-  ],
-  'English Language': [
-    { id: 'e1', subject: 'English Language', question: 'Choose the word opposite in meaning to "abundant"', options: ['Scarce', 'Plenty', 'Sufficient', 'Adequate'], correctAnswer: 'A', explanation: 'Abundant means plentiful, opposite is scarce', difficulty: 'easy' },
-    { id: 'e2', subject: 'English Language', question: 'Which word is spelled correctly?', options: ['Recieve', 'Receive', 'Receeve', 'Recive'], correctAnswer: 'B', explanation: 'The correct spelling is "Receive"', difficulty: 'easy' },
-    { id: 'e3', subject: 'English Language', question: 'She _____ to the market yesterday.', options: ['go', 'goes', 'went', 'going'], correctAnswer: 'C', explanation: 'Past tense is "went"', difficulty: 'medium' }
-  ],
-  'Physics': [
-    { id: 'p1', subject: 'Physics', question: 'What is the SI unit of force?', options: ['Newton', 'Joule', 'Watt', 'Pascal'], correctAnswer: 'A', explanation: 'The SI unit of force is Newton (N)', difficulty: 'easy' },
-    { id: 'p2', subject: 'Physics', question: 'Calculate the velocity of an object that travels 100m in 5s', options: ['20 m/s', '25 m/s', '15 m/s', '30 m/s'], correctAnswer: 'A', explanation: 'Velocity = Distance/Time = 100/5 = 20 m/s', difficulty: 'medium' }
-  ],
-  'Chemistry': [
-    { id: 'c1', subject: 'Chemistry', question: 'What is the atomic number of Carbon?', options: ['6', '12', '8', '14'], correctAnswer: 'A', explanation: 'Carbon has atomic number 6', difficulty: 'easy' },
-    { id: 'c2', subject: 'Chemistry', question: 'How many valence electrons does Oxygen have?', options: ['2', '4', '6', '8'], correctAnswer: 'C', explanation: 'Oxygen has 6 valence electrons', difficulty: 'medium' }
-  ],
-  'Biology': [
-    { id: 'b1', subject: 'Biology', question: 'What is the powerhouse of the cell?', options: ['Mitochondria', 'Nucleus', 'Ribosome', 'Chloroplast'], correctAnswer: 'A', explanation: 'Mitochondria is the powerhouse of the cell', difficulty: 'easy' },
-    { id: 'b2', subject: 'Biology', question: 'How many chromosomes does a human have?', options: ['23', '46', '48', '50'], correctAnswer: 'B', explanation: 'Humans have 46 chromosomes (23 pairs)', difficulty: 'medium' }
-  ]
+  'Further Math': 'further-math',
+  'Agriculture': 'agriculture',
+  'Computer': 'computer'
 };
 
 const fetchQuestionsFromALOC = async (subject, limit = 20) => {
   try {
-    if (!ALOC_ACCESS_TOKEN) {
-      console.log('ALOC_ACCESS_TOKEN not set, using fallback questions');
+    const subjectKey = subjectMapping[subject] || subject.toLowerCase().replace(/\s+/g, '-');
+    
+    console.log(`Fetching ${limit} questions for subject: ${subjectKey}`);
+    
+    const response = await axios.get(`${ALOC_API_URL}/q/${limit}`, {
+      params: {
+        subject: subjectKey
+      },
+      headers: {
+        'Accept': 'application/json',
+        'AccessToken': ALOC_ACCESS_TOKEN,
+        'User-Agent': 'Mozilla/5.0'
+      },
+      timeout: 15000
+    });
+
+    if (!response.data || !response.data.data || response.data.data.length === 0) {
+      console.log(`No questions found from ALOC for ${subject}, using fallback`);
       return getFallbackQuestions(subject, limit);
     }
 
-    const subjectKey = subjectMapping[subject] || subject.toLowerCase();
-    
-    const response = await axios.get(`${ALOC_API_URL}/questions`, {
-      params: {
-        subject: subjectKey,
-        limit: limit,
-        type: 'utme'
-      },
-      headers: {
-        'Authorization': `Bearer ${ALOC_ACCESS_TOKEN}`,
-        'Accept': 'application/json'
-      },
-      timeout: 10000
-    });
+    return response.data.data.map((q, idx) => {
+      const options = [];
+      if (q.option_a) options.push(q.option_a);
+      if (q.option_b) options.push(q.option_b);
+      if (q.option_c) options.push(q.option_c);
+      if (q.option_d) options.push(q.option_d);
 
-    if (response.data && response.data.data && Array.isArray(response.data.data)) {
-      return response.data.data.map(q => ({
-        id: q.id,
+      const answerMap = { 'a': 0, 'b': 1, 'c': 2, 'd': 3 };
+      const correctIndex = answerMap[q.answer?.toLowerCase()] || 0;
+
+      return {
+        id: q.id || `${subject}-${idx}`,
         subject: subject,
-        question: q.question,
-        options: [q.option_a, q.option_b, q.option_c, q.option_d].filter(Boolean),
-        correctAnswer: q.answer || 'A',
-        explanation: q.solution || q.explanation || 'See explanation',
+        question: q.question || q.body || '',
+        options: options,
+        correct: correctIndex,
+        answer: q.answer || 'A',
+        explanation: q.solution || q.explanation || 'Review the question carefully',
         year: q.year || null,
         examType: q.examtype || 'UTME',
-        difficulty: q.difficulty || 'medium'
-      }));
-    }
-
-    return getFallbackQuestions(subject, limit);
+        difficulty: 'medium'
+      };
+    });
   } catch (error) {
-    console.error('Error fetching from ALOC:', error.message);
+    console.error(`Error fetching from ALOC for ${subject}:`, error.message);
     return getFallbackQuestions(subject, limit);
   }
 };
 
 const getFallbackQuestions = (subject, limit) => {
-  const questions = fallbackQuestions[subject] || fallbackQuestions['Mathematics'];
-  return questions.slice(0, limit);
+  const fallbackData = {
+    Mathematics: [
+      { id: 1, question: "Simplify: 3(2x - 5) - 2(3x + 4)", options: ["-23", "-7", "23", "7"], correct: 0, subject: "Mathematics" },
+      { id: 2, question: "If y = 3x² - 2x + 1, find dy/dx", options: ["6x - 2", "3x - 2", "6x + 2", "3x + 2"], correct: 0, subject: "Mathematics" },
+      { id: 3, question: "What is 15% of 80?", options: ["10", "12", "14", "16"], correct: 1, subject: "Mathematics" },
+      { id: 4, question: "Solve: 2x + 5 = 13", options: ["x = 4", "x = 9", "x = 2", "x = 18"], correct: 0, subject: "Mathematics" },
+      { id: 5, question: "Find the area of a circle with radius 5cm", options: ["78.5 cm²", "31.4 cm²", "25 cm²", "50 cm²"], correct: 0, subject: "Mathematics" }
+    ],
+    English: [
+      { id: 6, question: "Which word is spelled correctly?", options: ["Recieve", "Receive", "Receeve", "Recive"], correct: 1, subject: "English" },
+      { id: 7, question: "Choose the word opposite in meaning to 'abundant'", options: ["Scarce", "Plenty", "Sufficient", "Adequate"], correct: 0, subject: "English" },
+      { id: 8, question: "She _____ to the market yesterday", options: ["go", "goes", "went", "going"], correct: 2, subject: "English" },
+      { id: 9, question: "What is the plural of 'child'?", options: ["Childs", "Children", "Childes", "Childer"], correct: 1, subject: "English" },
+      { id: 10, question: "Identify the verb: 'The cat sleeps soundly'", options: ["The", "cat", "sleeps", "soundly"], correct: 2, subject: "English" }
+    ],
+    Physics: [
+      { id: 11, question: "What is the SI unit of force?", options: ["Kilogram", "Newton", "Joule", "Watt"], correct: 1, subject: "Physics" },
+      { id: 12, question: "Speed of light is approximately", options: ["3 × 10⁸ m/s", "3 × 10⁶ m/s", "3 × 10¹⁰ m/s", "3 × 10⁵ m/s"], correct: 0, subject: "Physics" },
+      { id: 13, question: "What is the value of g?", options: ["10 m/s²", "9.8 m/s²", "12 m/s²", "8.5 m/s²"], correct: 1, subject: "Physics" },
+      { id: 14, question: "Ohm's law states that", options: ["V = IR", "V = I²R", "V = I/R", "V = R/I"], correct: 0, subject: "Physics" },
+      { id: 15, question: "What is the SI unit of energy?", options: ["Newton", "Joule", "Watt", "Pascal"], correct: 1, subject: "Physics" }
+    ],
+    Chemistry: [
+      { id: 16, question: "What is the chemical symbol for gold?", options: ["Go", "Gd", "Au", "Ag"], correct: 2, subject: "Chemistry" },
+      { id: 17, question: "How many atoms are in H₂O?", options: ["2", "3", "4", "5"], correct: 1, subject: "Chemistry" },
+      { id: 18, question: "What is the pH of a neutral solution?", options: ["0", "7", "14", "1"], correct: 1, subject: "Chemistry" },
+      { id: 19, question: "Which element has atomic number 8?", options: ["Nitrogen", "Carbon", "Oxygen", "Fluorine"], correct: 2, subject: "Chemistry" },
+      { id: 20, question: "What is the formula for sodium chloride?", options: ["Na₂Cl", "NaCl₂", "NaCl", "Na₂Cl₂"], correct: 2, subject: "Chemistry" }
+    ],
+    Biology: [
+      { id: 21, question: "How many chambers does a human heart have?", options: ["2", "3", "4", "5"], correct: 2, subject: "Biology" },
+      { id: 22, question: "What is the powerhouse of the cell?", options: ["Nucleus", "Mitochondria", "Ribosome", "Golgi body"], correct: 1, subject: "Biology" },
+      { id: 23, question: "How many pairs of chromosomes do humans have?", options: ["20", "23", "46", "50"], correct: 1, subject: "Biology" },
+      { id: 24, question: "What process do plants use to make food?", options: ["Respiration", "Photosynthesis", "Digestion", "Fermentation"], correct: 1, subject: "Biology" },
+      { id: 25, question: "Which blood type is the universal donor?", options: ["A", "B", "AB", "O"], correct: 3, subject: "Biology" }
+    ]
+  };
+
+  const questions = fallbackData[subject] || fallbackData.Mathematics;
+  return questions.slice(0, Math.min(limit, questions.length));
 };
 
 module.exports = {
