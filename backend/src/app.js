@@ -3,7 +3,7 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
-const { connectDB } = require('./config/mongodb');
+const { db } = require('./utils/sqlite');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const examRoutes = require('./routes/exams');
@@ -50,11 +50,12 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-const startServer = async () => {
+const startServer = () => {
   try {
-    await connectDB();
+    console.log('SQLite database initialized successfully');
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
+      console.log(`Database: ${db.name}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);
