@@ -42,6 +42,10 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
+localPort = 35565
+externalPort = 3003
+
+[[ports]]
 localPort = 38527
 externalPort = 3002
 
@@ -49,3 +53,9 @@ externalPort = 3002
 deploymentTarget = "autoscale"
 run = ["bash", "-c", "cd backend && npm install --production && node src/app.js"]
 build = ["bash", "-c", "cd frontend && npm install && npm run build"]
+
+[userenv]
+
+[userenv.shared]
+JWT_SECRET = "exam-catalyst-2026-secure-jwt-secret-key-for-token-generation"
+NODE_ENV = "production"
