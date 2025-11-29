@@ -28,16 +28,18 @@ app.use('/api/results', resultRoutes);
 
 const frontendBuildPath = path.join(__dirname, '../../frontend/build');
 
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(frontendBuildPath));
-  
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) {
-      return next();
-    }
-    res.sendFile(path.join(frontendBuildPath, 'index.html'));
+// Serve static frontend files
+app.use(express.static(frontendBuildPath));
+
+// Serve index.html for all non-API routes (SPA routing)
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/health')) {
+    return next();
+  }
+  res.sendFile(path.join(frontendBuildPath, 'index.html'), (err) => {
+    if (err) next();
   });
-}
+});
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });

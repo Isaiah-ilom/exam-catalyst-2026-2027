@@ -7,6 +7,19 @@ const QuestionDisplay = ({ questions, onSubmit, mode = 'practice' }) => {
   const [flagged, setFlagged] = useState({});
   const [timeLeft, setTimeLeft] = useState(300);
 
+  // Guard against empty questions
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="text-center">
+          <div className="text-6xl mb-4">⏳</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Loading Questions...</h2>
+          <p className="text-gray-600 dark:text-gray-400">Please wait while we fetch questions from the ALOC API</p>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -20,7 +33,7 @@ const QuestionDisplay = ({ questions, onSubmit, mode = 'practice' }) => {
     return () => clearInterval(timer);
   }, []);
 
-  const currentQuestion = questions[currentIndex];
+  const currentQuestion = questions[currentIndex] || {};
 
   const handleSelectAnswer = (index) => {
     setAnswers({

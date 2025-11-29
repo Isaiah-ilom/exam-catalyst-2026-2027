@@ -19,19 +19,29 @@ const ExamPage = () => {
 
   const fetchQuestions = async () => {
     try {
-      const response = await axios.get('/api/questions/subjects');
-      const response2 = await axios.get(`/api/questions?subject=${subject}&limit=${questionCount}`);
+      console.log(`Fetching questions for ${subject} (${questionCount} questions)`);
+      const response = await axios.get(`/api/questions?subject=${subject}&limit=${questionCount}`);
       
-      if (response2.data.success) {
-        setQuestions(response2.data.data);
+      console.log('Response:', response.data);
+      
+      if (response.data && response.data.success && response.data.data) {
+        const questions = response.data.data.map((q, idx) => ({
+          ...q,
+          id: q.id || idx,
+          subject: q.subject || subject,
+          question: q.question || '',
+          options: Array.isArray(q.options) ? q.options : [],
+          correct: typeof q.correct === 'number' ? q.correct : 0
+        }));
+        console.log('Setting questions:', questions);
+        setQuestions(questions);
+      } else {
+        console.log('Invalid response format:', response.data);
+        setQuestions([]);
       }
     } catch (error) {
       console.error('Error fetching questions:', error);
-      // Use fallback data
-      setQuestions([
-        { id: 1, question: "Sample Question 1?", options: ["Option A", "Option B", "Option C", "Option D"], correct: 0 },
-        { id: 2, question: "Sample Question 2?", options: ["Option A", "Option B", "Option C", "Option D"], correct: 1 },
-      ]);
+      setQuestions([]);
     } finally {
       setLoading(false);
     }
