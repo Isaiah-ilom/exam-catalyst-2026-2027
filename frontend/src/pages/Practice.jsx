@@ -15,8 +15,7 @@ const Practice = () => {
 
   const fetchSubjects = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-      const response = await axios.get(`${apiUrl}/questions/subjects`);
+      const response = await axios.get('/api/questions/subjects');
       if (response.data.success) {
         setSubjects(response.data.data);
       }
@@ -56,7 +55,7 @@ const Practice = () => {
       alert('Please select a subject');
       return;
     }
-    navigate('/app/exam', { 
+    navigate('/exam', { 
       state: { 
         mode: 'practice', 
         subject: selectedSubject,

@@ -1,4 +1,4 @@
-const { fetchQuestionsFromALOC } = require('../services/alocService');
+const mockQuestions = require('../data/mockQuestions');
 
 exports.getQuestions = async (req, res) => {
   try {
@@ -11,12 +11,13 @@ exports.getQuestions = async (req, res) => {
       });
     }
 
-    const questions = await fetchQuestionsFromALOC(subject, parseInt(limit));
+    const questions = mockQuestions[subject] || [];
+    const limitedQuestions = questions.slice(0, Math.min(parseInt(limit), questions.length));
     
     res.json({ 
       success: true, 
-      data: questions, 
-      count: questions.length 
+      data: limitedQuestions, 
+      count: limitedQuestions.length 
     });
   } catch (error) {
     console.error('Error in getQuestions:', error);
@@ -32,12 +33,13 @@ exports.getQuestionsBySubject = async (req, res) => {
     const { subject } = req.params;
     const { limit = 20 } = req.query;
     
-    const questions = await fetchQuestionsFromALOC(subject, parseInt(limit));
+    const questions = mockQuestions[subject] || [];
+    const limitedQuestions = questions.slice(0, Math.min(parseInt(limit), questions.length));
     
     res.json({ 
       success: true, 
-      data: questions, 
-      count: questions.length 
+      data: limitedQuestions, 
+      count: limitedQuestions.length 
     });
   } catch (error) {
     console.error('Error in getQuestionsBySubject:', error);
