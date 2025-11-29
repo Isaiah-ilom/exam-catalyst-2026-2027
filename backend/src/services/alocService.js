@@ -1,7 +1,7 @@
 const axios = require('axios');
 
-const ALOC_API_URL = 'https://questions.aloc.com.ng/api/v2/q';
-const ALOC_ACCESS_TOKEN = 'QB-1e5c5f1553ccd8cd9e11';
+const ALOC_API_URL = process.env.ALOC_API_URL || 'https://questions.aloc.com.ng/api/v2/q';
+const ALOC_ACCESS_TOKEN = process.env.ALOC_ACCESS_TOKEN || 'QB-1e5c5f1553ccd8cd9e11';
 
 const subjectMapping = {
   'Mathematics': 'mathematics',
@@ -47,9 +47,67 @@ const parseALOCResponse = (data) => {
 };
 
 const fetchQuestionsFromALOC = async (subject, limit = 20) => {
-  // Return fallback questions immediately for instant response
-  console.log(`[SUCCESS] Returning instant fallback questions for ${subject}`);
-  return getFallbackQuestions(subject, limit);
+  try {
+    const subjectKey = subjectMapping[subject] || subject.toLowerCase().replace(/\s+/g, '-');
+    
+    console.log(`[ALOC API] Fetching ${limit} questions for subject: ${subjectKey}`);
+    console.log(`[ALOC API] URL: ${ALOC_API_URL}/${limit}?subject=${subjectKey}`);
+    
+    const apiUrl = `${ALOC_API_URL}/${limit}`;
+    
+    const response = await axios.get(apiUrl, {
+      params: {
+        subject: subjectKey
+      },
+      headers: {
+        'Accept': 'application/json',
+        'AccessToken': ALOC_ACCESS_TOKEN
+      },
+      timeout: 15000
+    });
+
+    console.log(`[ALOC API] ✅ Success! Received response with data type:`, typeof response.data);
+    
+    if (!response.data) {
+      console.log(`[ALOC API] ⚠️ No response data, using fallback`);
+      return getFallbackQuestions(subject, limit);
+    }
+
+    // Handle different response formats
+    let questionsArray = [];
+    
+    if (Array.isArray(response.data)) {
+      questionsArray = response.data;
+    } else if (response.data.data && Array.isArray(response.data.data)) {
+      questionsArray = response.data.data;
+    } else if (response.data.questions && Array.isArray(response.data.questions)) {
+      questionsArray = response.data.questions;
+    }
+
+    if (questionsArray.length === 0) {
+      console.log(`[ALOC API] ⚠️ No questions found in response, using fallback`);
+      return getFallbackQuestions(subject, limit);
+    }
+
+    console.log(`[ALOC API] ✅ Successfully parsed ${questionsArray.length} questions from ALOC API`);
+    
+    return questionsArray.map((q, idx) => {
+      const parsed = parseALOCResponse(q);
+      return {
+        ...parsed,
+        subject: subject,
+        index: idx,
+        source: 'ALOC'
+      };
+    });
+
+  } catch (error) {
+    console.error(`[ALOC API] ❌ Error:`, error.message);
+    console.error(`[ALOC API] Status:`, error.response?.status);
+    console.error(`[ALOC API] Data:`, error.response?.data);
+    console.log(`[ALOC API] Falling back to practice questions`);
+    return getFallbackQuestions(subject, limit);
+  }
 };
 
 const getFallbackQuestions = (subject, limit) => {
